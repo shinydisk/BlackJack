@@ -1,0 +1,22 @@
+services:
+  blackjack-frontend:
+    container_name: blackjack-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    depends_on:
+      - blackjack-server
+
+  blackjack-server:
+    container_name: blackjack-server
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+    environment:
+      - PORT=4000

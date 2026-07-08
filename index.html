@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blackjack</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" type="image/x-icon" src="./assets/blackjack.ico">
+  <script>
+    (function() {
+      var t = localStorage.getItem('bj-theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- ── TOP BAR ────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <span class="brand-title">Blackjack ♣♦︎♠︎♥</span>
+      <span class="brand-sub" data-i18n="brand-sub">Casino Royale — Single Deck</span>
+    </div>
+    <div class="topbar-controls">
+      <button class="btn-lang" id="btn-lang" onclick="toggleLang()" title="Langue / Language">🌐 FR</button>
+      <button class="btn-icon" id="btn-darkmode" onclick="toggleDarkMode()" title="Changer le thème">🌙</button>
+      <button class="btn-quit" id="btn-quit" onclick="handleQuit()" title="Quitter la partie" data-i18n="btn-quit">✕ Quitter</button>
+    </div>
+  </header>
+
+  <div class="felt">
+
+    <!-- ── LANDING ────────────────────────────────────────────────── -->
+    <div id="landing-screen">
+      <div class="landing-anim" aria-hidden="true">🃏</div>
+      <p class="screen-tagline" data-i18n="landing-tagline">Choisissez votre table</p>
+      <div class="option-grid">
+
+        <button class="option-card" onclick="goToSolo()">
+          <div class="option-icon">♠</div>
+          <div class="option-title" data-i18n="landing-solo-title">Solo</div>
+          <div class="option-desc" data-i18n="landing-solo-desc">Joueur contre la maison</div>
+        </button>
+
+        <button class="option-card" onclick="goToMulti()">
+          <div class="option-icon">♣</div>
+          <div class="option-title" data-i18n="landing-multi-title">Multijoueur</div>
+          <div class="option-desc" data-i18n="landing-multi-desc">Jusqu'à 10 joueurs</div>
+          <div class="option-tag" data-i18n="tag-soon">Sprint 2</div>
+        </button>
+
+      </div>
+
+      <!-- ── RULES (landing only) ───────────────────────────────────── -->
+      <section class="rules-section">
+        <h3 class="rules-title" data-i18n="rules-title">Règles du Blackjack</h3>
+        <div class="rules-grid">
+
+          <div class="rules-block">
+            <div class="rules-block-title" data-i18n="rules-obj-title">🎯 Objectif</div>
+            <ul class="rules-list">
+              <li data-i18n="rules-obj-body">Se rapprocher de 21 sans dépasser, battre le croupier.</li>
+            </ul>
+          </div>
+
+          <div class="rules-block">
+            <div class="rules-block-title" data-i18n="rules-cards-title">🃏 Valeurs des cartes</div>
+            <ul class="rules-list">
+              <li data-i18n="rules-cards-1">2–10 → valeur nominale</li>
+              <li data-i18n="rules-cards-2">Valet, Dame, Roi → 10</li>
+              <li data-i18n="rules-cards-3">As → 11 ou 1</li>
+            </ul>
+          </div>
+
+          <div class="rules-block">
+            <div class="rules-block-title" data-i18n="rules-play-title">📋 Déroulement</div>
+            <ul class="rules-list">
+              <li data-i18n="rules-play-1">Place ta mise avec les jetons</li>
+              <li data-i18n="rules-play-2">Reçois 2 cartes, croupier 2 (1 cachée)</li>
+              <li data-i18n="rules-play-3">Tirer — carte supplémentaire</li>
+              <li data-i18n="rules-play-4">Rester — garder ta main</li>
+              <li data-i18n="rules-play-5">Doubler — ×2 mise, 1 seule carte</li>
+              <li data-i18n="rules-play-6">Croupier joue, s'arrête à 17+</li>
+            </ul>
+          </div>
+
+          <div class="rules-block">
+            <div class="rules-block-title" data-i18n="rules-pay-title">💰 Gains</div>
+            <ul class="rules-list">
+              <li data-i18n="rules-pay-1">Blackjack (As + 10) → +150% mise</li>
+              <li data-i18n="rules-pay-2">Victoire → +100% mise</li>
+              <li data-i18n="rules-pay-3">Égalité → mise remboursée</li>
+              <li data-i18n="rules-pay-4">Défaite / Bust → mise perdue</li>
+            </ul>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ── SOLO SETUP ─────────────────────────────────────────────── -->
+    <div id="setup-screen">
+      <div class="back-row">
+        <button class="btn-text-back" onclick="goToLanding()" data-i18n="btn-back">← Retour</button>
+      </div>
+      <div class="setup-card">
+        <div class="setup-deco">♠ ♥ ♦ ♣</div>
+        <p class="setup-tagline" data-i18n="setup-tagline">Bonne chance au tapis !</p>
+
+        <div class="setup-field">
+          <label for="player-name" data-i18n="label-name">Ton prénom</label>
+          <input type="text" id="player-name" data-i18n-ph="ph-name" placeholder="Joueur" maxlength="20" />
+        </div>
+
+        <div class="setup-field">
+          <label for="start-bank" data-i18n="label-bank">Cagnotte de départ (€)</label>
+          <input type="number" id="start-bank" value="500" min="50" max="100000" step="50" />
+        </div>
+
+        <button class="btn-primary" onclick="startGame()" data-i18n="btn-play">Jouer</button>
+      </div>
+    </div>
+
+    <!-- ── MULTI MENU ─────────────────────────────────────────────── -->
+    <div id="multi-screen">
+      <div class="back-row">
+        <button class="btn-text-back" onclick="goToLanding()" data-i18n="btn-back">← Retour</button>
+      </div>
+      <p class="screen-tagline" data-i18n="multi-tagline">Joue avec tes amis</p>
+      <div class="option-grid">
+
+        <button class="option-card" onclick="goToCreateRoom()">
+          <div class="option-icon">✦</div>
+          <div class="option-title" data-i18n="multi-create-title">Créer une Room</div>
+          <div class="option-desc" data-i18n="multi-create-desc">Génère un code et invite tes amis</div>
+        </button>
+
+        <button class="option-card" onclick="goToJoinRoom()">
+          <div class="option-icon">→</div>
+          <div class="option-title" data-i18n="multi-join-title">Rejoindre</div>
+          <div class="option-desc" data-i18n="multi-join-desc">Rejoins avec un code</div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- ── CREATE ROOM ────────────────────────────────────────────── -->
+    <div id="create-room-screen">
+      <div class="back-row">
+        <button class="btn-text-back" onclick="goToLanding()" data-i18n="btn-back">← Retour</button>
+      </div>
+      <div class="screen-card">
+        <h2 class="screen-title" data-i18n="create-room-title">Nouvelle Room</h2>
+
+        <div class="setup-field">
+          <label for="room-name-input" data-i18n="label-room-name">Nom de la room</label>
+          <input type="text" id="room-name-input" data-i18n-ph="ph-room-name" placeholder="Optionnel..." maxlength="30" />
+        </div>
+
+        <div class="setup-field">
+          <label for="create-player-name" data-i18n="label-name">Ton prénom</label>
+          <input type="text" id="create-player-name" data-i18n-ph="ph-name" placeholder="Joueur" maxlength="20" />
+        </div>
+
+        <div class="setup-field">
+          <label data-i18n="label-max-players">Joueurs max</label>
+          <div class="counter-field">
+            <button class="counter-btn" onclick="adjustPlayerCount(-1)">−</button>
+            <span class="counter-val" id="player-count-val">6</span>
+            <button class="counter-btn" onclick="adjustPlayerCount(1)">+</button>
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <label data-i18n="label-game-mode">Mode de jeu</label>
+          <div class="mode-segment">
+            <button class="mode-seg-btn" id="seg-timed" onclick="selectMode('timed')">
+              <span class="seg-icon">⏱</span>
+              <span class="seg-title" data-i18n="mode-timed-title">Chrono</span>
+              <span class="seg-desc" data-i18n="mode-timed-desc">30s mise · 25s jeu</span>
+            </button>
+            <button class="mode-seg-btn active" id="seg-free" onclick="selectMode('free')">
+              <span class="seg-icon">♾</span>
+              <span class="seg-title" data-i18n="mode-free-title">Libre</span>
+              <span class="seg-desc" data-i18n="mode-free-desc">Aucune limite</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="handleCreateRoom()" data-i18n="btn-create-room">Créer la Room</button>
+      </div>
+    </div>
+
+    <!-- ── JOIN ROOM ──────────────────────────────────────────────── -->
+    <div id="join-room-screen">
+      <div class="back-row">
+        <button class="btn-text-back" onclick="goToLanding()" data-i18n="btn-back">← Retour</button>
+      </div>
+      <div class="screen-card">
+        <h2 class="screen-title" data-i18n="join-room-title">Rejoindre une Room</h2>
+
+        <div class="setup-field">
+          <label data-i18n="label-room-code">Code</label>
+          <div class="code-input-group">
+            <input class="code-char" id="code-0" maxlength="1" autocomplete="off" />
+            <input class="code-char" id="code-1" maxlength="1" autocomplete="off" />
+            <input class="code-char" id="code-2" maxlength="1" autocomplete="off" />
+            <input class="code-char" id="code-3" maxlength="1" autocomplete="off" />
+          </div>
+        </div>
+
+        <div class="setup-field">
+          <label for="join-player-name" data-i18n="label-name">Ton prénom</label>
+          <input type="text" id="join-player-name" data-i18n-ph="ph-name" placeholder="Joueur" maxlength="20" />
+        </div>
+
+        <button class="btn-primary" onclick="handleJoinRoom()" data-i18n="btn-join-room">Rejoindre</button>
+        <p id="join-msg" class="join-msg"></p>
+      </div>
+    </div>
+
+    <!-- ── LOBBY ──────────────────────────────────────────────────── -->
+    <div id="lobby-screen">
+      <div class="screen-card lobby-card">
+        <div class="back-row">
+          <button class="btn-text-back" onclick="goToLanding()" data-i18n="btn-back">← Retour</button>
+        </div>
+        <h2 class="screen-title" data-i18n="lobby-title">Salon d'attente</h2>
+
+        <div class="lobby-code-section">
+          <span class="lobby-code-lbl" data-i18n="lbl-code">CODE</span>
+          <div class="lobby-code-row">
+            <span class="lobby-code-val" id="lobby-code-display">----</span>
+            <button class="btn-icon btn-copy" id="btn-copy" onclick="copyCode()" title="Copier">⧉</button>
+          </div>
+        </div>
+
+        <div class="lobby-info-row">
+          <span id="lobby-mode-display">♾ Libre</span>
+          <span id="lobby-capacity">0/6</span>
+        </div>
+
+        <div id="lobby-players-list" class="lobby-players-list"></div>
+
+        <div id="connection-status" class="connection-status disconnected">
+          <span id="connection-icon">🔴</span>
+          <span id="connection-text">Connexion...</span>
+        </div>
+
+        <button class="btn-primary" onclick="handleLobbyStart()" data-i18n="btn-start">Démarrer</button>
+      </div>
+    </div>
+
+    <!-- ── GAME ───────────────────────────────────────────────────── -->
+    <div id="game-screen">
+
+      <div id="result-banner" class="result-banner"></div>
+
+      <div class="hud">
+        <div class="hud-item">
+          <div class="hud-label" data-i18n="hud-player">Joueur</div>
+          <div class="hud-value" id="hud-name">—</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label" data-i18n="hud-bank-lbl">Cagnotte</div>
+          <div class="hud-value gold" id="hud-bank">0 €</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label" data-i18n="hud-bet-lbl">Mise actuelle</div>
+          <div class="hud-value" id="hud-bet">0 €</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label" data-i18n="hud-hands-lbl">Mains</div>
+          <div class="hud-value" id="hud-hands">0</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label" data-i18n="hud-won-lbl">Gagnées</div>
+          <div class="hud-value won" id="hud-won">0</div>
+        </div>
+        <div class="hud-item">
+          <div class="hud-label" data-i18n="hud-lost-lbl">Perdues</div>
+          <div class="hud-value lost" id="hud-lost">0</div>
+        </div>
+      </div>
+
+      <!-- Croupier -->
+      <div class="zone">
+        <div class="zone-label">
+          <span data-i18n="zone-dealer">Croupier</span>
+          <span class="score-badge" id="dealer-score"></span>
+        </div>
+        <div class="cards-row" id="dealer-cards"></div>
+      </div>
+
+      <!-- Joueur -->
+      <div class="zone">
+        <div class="zone-label">
+          <span data-i18n="zone-player">Ta main</span>
+          <span class="score-badge" id="player-score"></span>
+        </div>
+        <div class="cards-row" id="player-cards"></div>
+      </div>
+
+      <!-- Mise -->
+      <div class="bet-area">
+        <div class="chips-row" id="chips-row"></div>
+        <hr class="divider" />
+        <div class="bet-display">
+          <span class="bet-label" data-i18n="bet-label">MISE :</span>
+          <span class="bet-amount" id="bet-display">0 €</span>
+          <button class="btn-action"
+                  style="flex:none; padding:6px 10px; font-size:10px;"
+                  id="btn-clear"
+                  onclick="handleClearBet()"
+                  data-i18n="btn-clear">Effacer</button>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="btn-action deal" id="btn-deal"   onclick="handleDeal()"   data-i18n="btn-deal">Distribuer ▶</button>
+        <button class="btn-action"      id="btn-hit"    onclick="handleHit()"    disabled data-i18n="btn-hit">Tirer</button>
+        <button class="btn-action"      id="btn-stand"  onclick="handleStand()"  disabled data-i18n="btn-stand">Rester</button>
+        <button class="btn-action"      id="btn-double" onclick="handleDouble()" disabled data-i18n="btn-double">Doubler</button>
+      </div>
+
+      <div id="msg"></div>
+    </div>
+
+  </div>
+
+  <!-- ── GAME OVER OVERLAY ─────────────────────────────────────────── -->
+  <div id="gameover-overlay" class="gameover-overlay">
+    <div class="gameover-card">
+      <div class="gameover-icon">💸</div>
+      <h2 class="gameover-title" data-i18n="go-title">Session Terminée</h2>
+      <p class="gameover-subtitle" data-i18n="go-subtitle">Ta cagnotte est à zéro.</p>
+
+      <div class="gameover-stats">
+        <div class="gameover-stat">
+          <div class="gameover-stat-lbl" data-i18n="go-hands">Mains</div>
+          <div class="gameover-stat-val" id="go-hands">0</div>
+        </div>
+        <div class="gameover-stat">
+          <div class="gameover-stat-lbl" data-i18n="go-won">Victoires</div>
+          <div class="gameover-stat-val go-green" id="go-won">0</div>
+        </div>
+        <div class="gameover-stat">
+          <div class="gameover-stat-lbl" data-i18n="go-lost">Défaites</div>
+          <div class="gameover-stat-val go-red" id="go-lost">0</div>
+        </div>
+        <div class="gameover-stat">
+          <div class="gameover-stat-lbl" data-i18n="go-ratio">Taux victoire</div>
+          <div class="gameover-stat-val" id="go-ratio">—</div>
+        </div>
+      </div>
+
+      <p class="gameover-redirect" id="go-redirect"></p>
+
+      <div class="gameover-actions">
+        <button class="gameover-btn" onclick="handleGameOverRestart()" data-i18n="go-restart">Nouvelle partie</button>
+        <button class="gameover-btn gameover-btn-primary" onclick="handleGameOverHome()" data-i18n="go-home">Accueil</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CHAT PANEL (multijoueur uniquement) ───────────────────────── -->
+  <aside id="chat-panel" class="chat-panel">
+
+    <div class="chat-header">
+      <span class="chat-header-title">💬 <span data-i18n="chat-title">Chat</span></span>
+      <div class="chat-header-right">
+        <span class="chat-s2-badge" data-i18n="chat-s2">Sprint 2</span>
+        <button class="btn-icon chat-close-btn" onclick="closeChat()">✕</button>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <p class="chat-empty" data-i18n="chat-empty">Aucun message pour l'instant.</p>
+    </div>
+
+    <!-- GIF Picker -->
+    <div id="gif-picker" class="gif-picker">
+      <div class="gif-search-row">
+        <input type="text" id="gif-search-input" data-i18n-ph="gif-search-ph" placeholder="Chercher un GIF..." />
+        <button class="gif-search-btn" onclick="searchGifs()">🔍</button>
+      </div>
+      <div id="gif-results" class="gif-results"></div>
+    </div>
+
+    <!-- Image URL -->
+    <div id="media-url-row" class="media-url-row">
+      <input type="text" id="media-url-input" data-i18n-ph="media-url-ph" placeholder="Coller une URL image..." />
+      <button class="media-url-confirm" onclick="confirmMediaUrl()">✓</button>
+    </div>
+
+    <!-- Pending media preview -->
+    <div id="chat-media-preview" class="chat-media-preview">
+      <img id="chat-preview-img" src="" alt="" />
+      <button class="chat-preview-clear" onclick="clearPendingMedia()">✕</button>
+    </div>
+
+    <div class="chat-toolbar">
+      <button class="chat-tool-btn" id="btn-gif-tool" onclick="toggleGifPicker()" data-i18n="btn-gif">GIF</button>
+      <button class="chat-tool-btn" id="btn-img-tool" onclick="toggleMediaInput()" title="Image">🖼</button>
+    </div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" data-i18n-ph="chat-ph" placeholder="Message..." maxlength="200" />
+      <button class="chat-send-btn" onclick="sendChatMessage()">↑</button>
+    </div>
+
+  </aside>
+
+  <!-- Floating toggle button -->
+  <button id="chat-toggle-btn" class="chat-toggle-btn" onclick="openChat()">
+    💬
+    <span class="chat-badge" id="chat-badge">0</span>
+  </button>
+
+  <footer class="site-footer">
+    © <span id="footer-year"></span> Sh1nyd1sk — Blackjack Casino Royale
+  </footer>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+  <script>document.getElementById('footer-year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
